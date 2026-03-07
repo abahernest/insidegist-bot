@@ -69,6 +69,3 @@ jobs:
             # 3. Pull latest repo changes
             git pull origin main
 
-            # 4. Full restart
-            docker compose pull
-
