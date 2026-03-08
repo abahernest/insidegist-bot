@@ -42,14 +42,22 @@ async function initializeBot(persona: BotPersona): Promise<BotInstance | null> {
 
     // Step 2: Register the user
     try {
-        const resp = await api.register({
+        await api.register({
             email: persona.email,
             username: persona.username,
             password: persona.password,
         });
         console.log(`[init] Registered: ${persona.username} (${persona.company})`);
 
-        // Step 3: Update profile with company info
+        // Step 3: Login to get a guaranteed valid access token
+        await api.fetchCsrfToken();
+        const loginResp = await api.login({
+            username: persona.username,
+            password: persona.password,
+        });
+        console.log(`[init] Logged in: ${persona.username} (token: ${api.isAuthenticated() ? 'yes' : 'NO'})`);
+
+        // Step 4: Update profile with company info
         try {
             await api.updateProfile({
                 summary: persona.bio,
@@ -63,7 +71,7 @@ async function initializeBot(persona: BotPersona): Promise<BotInstance | null> {
         return {
             api,
             persona,
-            userId: resp.user?.id,
+            userId: loginResp.user?.id,
             verified: true,
         };
     } catch (err: unknown) {
