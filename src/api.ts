@@ -82,6 +82,17 @@ export class ApiClient {
         return (await this.client.patch('/users/update-profile', data)).data;
     }
 
+    // ---------- Verification ----------
+
+    async initSignupVerification(email: string) {
+        const resp = await this.client.post('/users/init-signup-ver', { email });
+        return resp.data; // Backend now returns the OTP in the response
+    }
+
+    async completeSignupVerification(email: string, otp: string) {
+        return (await this.client.post('/users/complete-signup-ver', { email, otp })).data;
+    }
+
     // ---------- Posts ----------
 
     async listPosts(opts: { limit?: number; page?: number; sortBy?: string; type?: string } = {}) {

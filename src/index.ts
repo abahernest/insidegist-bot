@@ -29,16 +29,38 @@ async function initializeBot(persona: BotPersona): Promise<BotInstance | null> {
         console.warn(`[init] Could not fetch CSRF token for ${persona.username}`);
     }
 
-    // Try to register first
+    // Step 1: Verify email first (init-signup-ver → complete-signup-ver)
     try {
-        const resp = await api.register({
+        const verResp = await api.initSignupVerification(persona.email);
+        const otp = typeof verResp === 'string' ? verResp : (verResp?.otp ?? verResp?.code ?? verResp?.data);
+        if (otp) {
+            await api.completeSignupVerification(persona.email, String(otp));
+            console.log(`[init] Verified email: ${persona.email}`);
+        } else {
+            console.warn(`[init] Could not extract OTP for ${persona.email}, response:`, verResp);
+        }
+    } catch (verErr) {
+        console.warn(`[init] Verification failed for ${persona.email}:`, (verErr as Error).message);
+    }
+
+    // Step 2: Register the user
+    try {
+        await api.register({
             email: persona.email,
             username: persona.username,
             password: persona.password,
         });
         console.log(`[init] Registered: ${persona.username} (${persona.company})`);
 
-        // Update profile with company info
+        // Step 3: Login to get a guaranteed valid access token
+        await api.fetchCsrfToken();
+        const loginResp = await api.login({
+            username: persona.username,
+            password: persona.password,
+        });
+        console.log(`[init] Logged in: ${persona.username} (token: ${api.isAuthenticated() ? 'yes' : 'NO'})`);
+
+        // Step 4: Update profile with company info
         try {
             await api.updateProfile({
                 summary: persona.bio,
@@ -46,14 +68,14 @@ async function initializeBot(persona: BotPersona): Promise<BotInstance | null> {
                 job_title: persona.jobTitle,
             });
         } catch {
-            // Profile update may fail if unverified, that's ok
+            // Profile update may fail, that's ok
         }
 
         return {
             api,
             persona,
-            userId: resp.user?.id,
-            verified: true, // Will be set to false if 401 occurs
+            userId: loginResp.user?.id,
+            verified: true,
         };
     } catch (err: unknown) {
         if (ApiClient.is4xx(err)) {
