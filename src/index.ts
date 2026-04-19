@@ -5,6 +5,8 @@ import { ApiClient } from './api';
 import { generateAllPersonas, BotPersona } from './identities';
 import { BotInstance } from './actions';
 import { Scheduler } from './scheduler';
+import fs from 'fs';
+import path from 'path';
 
 // ============================================================================
 // Configuration
@@ -12,6 +14,7 @@ import { Scheduler } from './scheduler';
 
 const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8080';
 const ACTIONS_PER_HOUR = parseInt(process.env.ACTIONS_PER_HOUR ?? '20', 10);
+const BOT_USERS_FILE = path.join(process.cwd(), 'bot_users.json');
 
 // ============================================================================
 // Bot initialization
@@ -97,8 +100,27 @@ async function main() {
     console.log(`Actions/hour: ${ACTIONS_PER_HOUR}`);
     console.log('='.repeat(60));
 
-    const personas = generateAllPersonas();
-    console.log(`\nGenerated ${personas.length} bot personas across 5 companies\n`);
+    let personas: BotPersona[] = [];
+    
+    if (fs.existsSync(BOT_USERS_FILE)) {
+        try {
+            const data = fs.readFileSync(BOT_USERS_FILE, 'utf8');
+            personas = JSON.parse(data);
+            console.log(`[main] Loaded ${personas.length} personas from ${BOT_USERS_FILE}`);
+        } catch (err) {
+            console.error(`[main] Error loading ${BOT_USERS_FILE}:`, (err as Error).message);
+            personas = generateAllPersonas();
+        }
+    } else {
+        console.log(`[main] No bot_users.json found, generating new personas...`);
+        personas = generateAllPersonas();
+        try {
+            fs.writeFileSync(BOT_USERS_FILE, JSON.stringify(personas, null, 2));
+            console.log(`[main] Saved ${personas.length} personas to ${BOT_USERS_FILE}`);
+        } catch (err) {
+            console.warn(`[main] Could not save personas to ${BOT_USERS_FILE}`);
+        }
+    }
 
     // Initialize all bots (register or login)
     const bots: BotInstance[] = [];

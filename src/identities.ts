@@ -95,6 +95,9 @@ export interface BotPersona {
 // ============================================================================
 
 export function generateAllPersonas(): BotPersona[] {
+    // Seed faker for deterministic generation
+    faker.seed(2026);
+    
     const personas: BotPersona[] = [];
 
     for (const company of COMPANIES) {

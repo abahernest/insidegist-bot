@@ -1,0 +1,20 @@
+[
+  {
+    "username": "johndoe22",
+    "email": "johndoe22@kuda.com",
+    "password": "BotPass2026!#",
+    "fullName": "John Doe",
+    "company": "Kuda Bank",
+    "jobTitle": "Software Engineer",
+    "bio": "Software Engineer at Kuda Bank. Building for the future."
+  },
+  {
+    "username": "janemartin88",
+    "email": "janemartin88@moniepoint.com",
+    "password": "BotPass2026!#",
+    "fullName": "Jane Martin",
+    "company": "Moniepoint",
+    "jobTitle": "Product Manager",
+    "bio": "Product Manager @ Moniepoint | Building the future of fintech 🚀"
+  }
+]
